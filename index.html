@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PETCOOKER 업무 진행보고</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0/css/all.min.css">
+    <style>
+        @media print {
+            button, .no-print {
+                display: none !important;
+            }
+            body {
+                font-size: 12px;
+            }
+            .page-break {
+                page-break-after: always;
+            }
+            input, textarea, select {
+                border: 1px solid #ddd !important;
+                padding: 5px !important; /* Print padding adjustment */
+            }
+            select {
+                /* Ensure select dropdown arrow doesn't overlap */
+                appearance: none;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                background-image: none !important; /* Hide arrow in print */
+            }
+        }
+
+        body {
+            font-family: Arial, 'Malgun Gothic', sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            max-width: 1024px;
+            margin: 0 auto;
+        }
+
+        .header-title {
+            color: #e53e3e;
+            font-weight: bold;
+            font-size: 24px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e53e3e;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #2b6cb0;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #2b6cb0;
+        }
+
+        input, textarea, select {
+            border: 1px solid #ddd;
+            padding: 8px;
+            border-radius: 4px;
+            width: 100%; /* Ensure inputs/selects fill cell width */
+            box-sizing: border-box; /* Include padding and border in element's total width */
+        }
+
+        input[type="date"] {
+            padding: 7px 8px; /* Adjust padding for date input */
+        }
+
+        select {
+             /* Add dropdown arrow */
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%234a5568" height="20" viewBox="0 0 20 20" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5H7z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.2em 1.2em;
+            padding-right: 2.5rem; /* Make space for the arrow */
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        button {
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed; /* Helps with consistent column widths */
+        }
+
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            vertical-align: middle;
+            overflow-wrap: break-word; /* Wrap long text */
+        }
+
+        table th {
+            background-color: #f0f0f0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .add-task-btn {
+            background-color: #3182ce;
+            color: white;
+            border-radius: 4px;
+            padding: 8px 16px;
+            margin-top: 8px;
+            border: none;
+        }
+
+        .form-buttons {
+            display: flex;
+            flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .form-buttons button {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: none;
+        }
+
+        .print-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #6b46c1;
+            color: white;
+            border-radius: 4px;
+            padding: 8px 16px;
+            font-weight: bold;
+            border: none;
+        }
+
+        /* File upload button styles */
+        .file-upload {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%; /* Make file upload take full cell width */
+        }
+
+        .file-upload input[type=file] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-label {
+            display: block; /* Make label block to fill width */
+            padding: 5px 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center; /* Center text in label */
+        }
+
+        .file-name {
+            display: block; /* Ensure file name appears below */
+            margin-top: 4px; /* Add space above file name */
+            font-size: 11px; /* Slightly smaller font for file name */
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis; /* Show ellipsis for long names */
+        }
+         /* Adjust column widths */
+         #current-tasks th:nth-child(1), #planned-tasks th:nth-child(1) { width: 15%; } /* 업무현황 */
+         #current-tasks th:nth-child(2), #planned-tasks th:nth-child(2) { width: 10%; } /* 담당자 */
+         #current-tasks th:nth-child(3), #planned-tasks th:nth-child(3) { width: 30%; } /* 업무내용 */
+         #current-tasks th:nth-child(4), #planned-tasks th:nth-child(4) { width: 15%; } /* 첨부파일 */
+         #current-tasks th:nth-child(5), #planned-tasks th:nth-child(5) { width: 10%; } /* 목표완료일 */
+         #current-tasks th:nth-child(6), #planned-tasks th:nth-child(6) { width: 15%; } /* 협업담당자 */
+         #current-tasks th:nth-child(7), #planned-tasks th:nth-child(7) { width: 5%; }  /* 삭제 */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="relative">
+             <h1 class="header-title">PETCOOKER 업무 진행보고</h1>
+            <button id="printButton" class="print-button no-print" onclick="window.print()">
+                인쇄 & PDF 저장
+                <i class="fas fa-print ml-1"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div>
+                <label for="author" class="block text-sm font-medium text-gray-700 mb-1">작성자</label>
+                <input type="text" id="author" placeholder="작성자 이름을 입력하세요">
+            </div>
+            <div>
+                <label for="date" class="block text-sm font-medium text-gray-700 mb-1">작성일</label>
+                <input type="date" id="date" value="">
+            </div>
+        </div>
+
+        <h2 class="section-title">금일 진행중인 업무</h2>
+        <div class="overflow-x-auto">
+            <table id="current-tasks">
+                <thead>
+                    <tr>
+                        <th>업무현황</th>
+                        <th>담당자</th>
+                        <th>업무내용</th>
+                        <th>첨부파일</th>
+                        <th>목표완료일</th>
+                        <th>협업담당자</th>
+                        <th>삭제</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <select>
+                                <option value="진행중">진행중</option>
+                                <option value="완료">완료</option>
+                            </select>
+                        </td>
+                        <td><input type="text" placeholder="담당자"></td>
+                        <td><textarea rows="2" placeholder="업무 내용을 입력하세요"></textarea></td>
+                        <td>
+                            <div class="file-upload">
+                                <label class="file-label">파일 선택</label>
+                                <input type="file" onchange="updateFileName(this)">
+                                <span class="file-name"></span>
+                            </div>
+                        </td>
+                        <td><input type="date" value=""></td>
+                        <td><input type="text" placeholder="협업담당자"></td>
+                        <td class="text-center">
+                            <button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button id="add-current-task" class="add-task-btn no-print" onclick="addTask('current-tasks')">
+            업무 추가
+            <i class="fas fa-plus ml-1"></i>
+        </button>
+
+        <h2 class="section-title">추가 필요 업무계획</h2>
+        <div class="overflow-x-auto">
+            <table id="planned-tasks">
+                <thead>
+                    <tr>
+                        <th>업무현황</th>
+                        <th>담당자</th>
+                        <th>업무내용</th>
+                        <th>첨부파일</th>
+                        <th>목표완료일</th>
+                        <th>협업담당자</th>
+                        <th>삭제</th>
+                    </tr>
+                </thead>
+                <tbody>
+                     <tr>
+                        <td>
+                            <select>
+                                <option value="계획중">계획중</option>
+                                <option value="진행중">진행중</option>
+                                <option value="보류">보류</option>
+                            </select>
+                        </td>
+                        <td><input type="text" placeholder="담당자"></td>
+                        <td><textarea rows="2" placeholder="업무 내용을 입력하세요"></textarea></td>
+                        <td>
+                            <div class="file-upload">
+                                <label class="file-label">파일 선택</label>
+                                <input type="file" onchange="updateFileName(this)">
+                                <span class="file-name"></span>
+                            </div>
+                        </td>
+                        <td><input type="date" value=""></td>
+                        <td><input type="text" placeholder="협업담당자"></td>
+                        <td class="text-center">
+                            <button onclick="deleteRow(this)" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button id="add-planned-task" class="add-task-btn no-print" onclick="addTask('planned-tasks')">
+            업무 추가
+            <i class="fas fa-plus ml-1"></i>
+        </button>
+
+        <h2 class="section-title">특이사항</h2>
+        <textarea id="special-notes" rows="4" placeholder="업무 관련 특이사항을 입력하세요"></textarea>
+
+        <h2 class="section-title">참조파일</h2>
+        <div class="mb-4">
+             <div class="file-upload" style="display: inline-block; width: auto;"> <label class="file-label" style="padding: 8px 16px;">파일 첨부</label>
+                <input type="file" id="reference-file" onchange="updateRefFileName(this)">
+            </div>
+             <span id="reference-file-name" class="file-name" style="display: inline-block; margin-left: 10px; text-align: left;"></span>
+        </div>
+
+        <div class="form-buttons no-print">
+            <button id="save-btn" class="bg-green-500 hover:bg-green-600 text-white" onclick="saveReport()">로컬 저장</button>
+            <button id="load-btn" class="bg-blue-500 hover:bg-blue-600 text-white" onclick="showLoadUI()">불러오기</button>
+            <button id="reset-btn" class="bg-red-500 hover:bg-red-600 text-white" onclick="resetForm()">초기화</button>
+            <button id="excel-btn" class="bg-purple-500 hover:bg-purple-600 text-white" onclick="saveAsExcel()">Excel 저장 (행 추가)</button>
+        </div>
+
+        <div id="saved-reports" class="mt-4 no-print" style="display: none;">
+            <h3 class="text-lg font-bold mb-2">저장된 보고서 (로컬)</h3>
+            <select id="report-select" class="w-full p-2 border rounded mb-2">
+                 <option value="">-- 보고서 선택 --</option>
+            </select>
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2" onclick="loadSelectedReport()">선택 보고서 불러오기</button>
+            <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded" onclick="hideLoadUI()">닫기</button>
+             <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded ml-2" onclick="deleteSelectedReport()">선택 보고서 삭제</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const formattedDate = today.toISOString().substr(0, 10);
+            document.getElementById('date').value = formattedDate;
+            updateSavedReportsList();
+        });
+
+        function addTask(tableId) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            if (!tbody || !tbody.rows[0]) {
+                 console.error("테이블 구조 오류: tbody 또는 첫 번째 행이 없습니다.");
+                 return;
+             }
+            const firstRow = tbody.rows[0];
+            const newRow = firstRow.cloneNode(true);
+
+            newRow.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(input => {
+                input.value = '';
+            });
+            newRow.querySelectorAll('input[type="file"]').forEach(input => {
+                 input.value = null;
+            });
+            newRow.querySelectorAll('.file-name').forEach(span => {
+                span.textContent = '';
+            });
+            newRow.querySelectorAll('select').forEach(select => {
+                 if (select.options.length > 0) {
+                    select.selectedIndex = 0;
+                }
+            });
+            tbody.appendChild(newRow);
+        }
+
+        function deleteRow(button) {
+            const row = button.closest('tr');
+            const tbody = row.parentElement;
+            if (tbody.children.length > 1) {
+                tbody.removeChild(row);
+            } else {
+                alert('최소 1개의 업무는 유지해야 합니다.');
+            }
+        }
+
+        function updateFileName(input) {
+            const file = input.files[0];
+            const fileName = file ? file.name : '';
+            const fileNameSpan = input.closest('td').querySelector('.file-name');
+            if (fileNameSpan) {
+                fileNameSpan.textContent = fileName;
+                fileNameSpan.title = fileName;
+            }
+        }
+
+        function updateRefFileName(input) {
+            const file = input.files[0];
+            const fileName = file ? file.name : '';
+            document.getElementById('reference-file-name').textContent = fileName;
+            document.getElementById('reference-file-name').title = fileName;
+        }
+
+        // === 수정된 부분: 로컬 스토리지 키 ===
+        const STORAGE_KEY = 'petcookerReports_v2';
+
+        function saveReport() {
+            const reportDate = document.getElementById('date').value;
+            let reportName = prompt(`[${reportDate}] 보고서를 저장할 이름을 입력하세요 (기본값: 날짜):`, reportDate);
+            if (reportName === null) return;
+            reportName = reportName.trim() || reportDate;
+
+            const reportData = {
+                name: reportName,
+                savedAt: new Date().toISOString(),
+                author: document.getElementById('author').value,
+                reportDate: reportDate,
+                currentTasks: getTableData('current-tasks'),
+                plannedTasks: getTableData('planned-tasks'),
+                specialNotes: document.getElementById('special-notes').value,
+                referenceFile: document.getElementById('reference-file-name').textContent
+            };
+
+            let savedReports = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+             const existingIndex = savedReports.findIndex(r => r.name === reportName);
+             if (existingIndex > -1) {
+                 if (!confirm(`'${reportName}' 이름의 보고서가 이미 존재합니다. 덮어쓰시겠습니까?`)) {
+                     return;
+                 }
+                 savedReports[existingIndex] = reportData;
+             } else {
+                 savedReports.push(reportData);
+             }
+             savedReports.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(savedReports));
+            alert(`'${reportName}' 보고서가 로컬에 저장되었습니다.`);
+            updateSavedReportsList();
+            hideLoadUI();
+        }
+
+        function getTableData(tableId) {
+            const table = document.getElementById(tableId);
+            const rows = table.querySelectorAll('tbody tr');
+            const data = [];
+            rows.forEach(row => {
+                 const statusSelect = row.querySelector('td:first-child select');
+                 const selectedStatus = statusSelect ? statusSelect.value : '';
+                 const fileSpan = row.querySelector('.file-name');
+                const rowData = {
+                    status: selectedStatus,
+                    manager: row.querySelector('td:nth-child(2) input')?.value || '',
+                    content: row.querySelector('td:nth-child(3) textarea')?.value || '',
+                    file: fileSpan ? fileSpan.textContent : '',
+                    targetDate: row.querySelector('td:nth-child(5) input')?.value || '',
+                    collaborator: row.querySelector('td:nth-child(6) input')?.value || ''
+                };
+                data.push(rowData);
+            });
+            return data;
+        }
+
+        function updateSavedReportsList() {
+            const savedReports = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const select = document.getElementById('report-select');
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+            savedReports.forEach((report, index) => {
+                const option = document.createElement('option');
+                option.value = report.name;
+                const saveDate = new Date(report.savedAt).toLocaleString('ko-KR', { dateStyle: 'short', timeStyle: 'short'});
+                option.textContent = `${report.name} (저장: ${saveDate})`;
+                select.appendChild(option);
+            });
+        }
+
+        function showLoadUI() {
+             updateSavedReportsList();
+             const loadDiv = document.getElementById('saved-reports');
+             const reportSelect = document.getElementById('report-select');
+             if (reportSelect.options.length <= 1) {
+                  alert("저장된 보고서가 없습니다.");
+                  loadDiv.style.display = 'none';
+             } else {
+                   reportSelect.selectedIndex = 0;
+                   loadDiv.style.display = 'block';
+             }
+         }
+         function hideLoadUI() {
+             document.getElementById('saved-reports').style.display = 'none';
+         }
+
+        function loadSelectedReport() {
+            const select = document.getElementById('report-select');
+            if (!select.value) {
+                alert('불러올 보고서를 선택하세요.');
+                return;
+            }
+            const savedReports = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            const selectedReport = savedReports.find(report => report.name === select.value);
+             if (!selectedReport) {
+                 alert('선택한 보고서를 찾을 수 없습니다. 목록을 새로고침합니다.');
+                 updateSavedReportsList();
+                 return;
+             }
+            document.getElementById('author').value = selectedReport.author;
+            document.getElementById('date').value = selectedReport.reportDate;
+            document.getElementById('special-notes').value = selectedReport.specialNotes;
+            document.getElementById('reference-file-name').textContent = selectedReport.referenceFile || '';
+             document.getElementById('reference-file').value = null;
+            restoreTableData('current-tasks', selectedReport.currentTasks);
+            restoreTableData('planned-tasks', selectedReport.plannedTasks);
+            hideLoadUI();
+            alert(`'${selectedReport.name}' 보고서를 불러왔습니다.`);
+        }
+
+        function deleteSelectedReport() {
+             const select = document.getElementById('report-select');
+             if (!select.value) {
+                 alert('삭제할 보고서를 선택하세요.');
+                 return;
+             }
+             const reportNameToDelete = select.value;
+             if (confirm(`'${reportNameToDelete}' 보고서를 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+                 let savedReports = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                 const updatedReports = savedReports.filter(report => report.name !== reportNameToDelete);
+                 localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedReports));
+                 alert(`'${reportNameToDelete}' 보고서가 삭제되었습니다.`);
+                 updateSavedReportsList();
+                 if (updatedReports.length === 0) {
+                     hideLoadUI();
+                 } else {
+                     select.selectedIndex = 0;
+                 }
+             }
+         }
+
+        function restoreTableData(tableId, data) {
+            const table = document.getElementById(tableId);
+            const tbody = table.querySelector('tbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (!data || data.length === 0) {
+                 addTask(tableId);
+                 const firstRow = tbody.querySelector('tr');
+                 if (firstRow) {
+                     firstRow.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(input => input.value = '');
+                     firstRow.querySelectorAll('.file-name').forEach(span => span.textContent = '');
+                     firstRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+                 }
+                 return;
+            }
+            data.forEach((rowData, index) => {
+                 addTask(tableId);
+                 const newRow = tbody.rows[tbody.rows.length - 1];
+                 setRowData(newRow, rowData);
+            });
+        }
+
+        function setRowData(row, data) {
+            const statusSelect = row.querySelector('td:first-child select');
+             if (statusSelect) {
+                 statusSelect.value = data.status || statusSelect.options[0].value;
+             }
+            row.querySelector('td:nth-child(2) input').value = data.manager || '';
+            row.querySelector('td:nth-child(3) textarea').value = data.content || '';
+            const fileNameSpan = row.querySelector('.file-name');
+            if (fileNameSpan) {
+                 fileNameSpan.textContent = data.file || '';
+                 fileNameSpan.title = data.file || '';
+            }
+             const fileInput = row.querySelector('input[type="file"]');
+             if (fileInput) fileInput.value = null;
+            row.querySelector('td:nth-child(5) input').value = data.targetDate || '';
+            row.querySelector('td:nth-child(6) input').value = data.collaborator || '';
+        }
+
+        function resetForm() {
+            if (confirm('모든 입력 내용을 초기화하시겠습니까? (저장된 내용은 삭제되지 않습니다)')) {
+                document.getElementById('author').value = '';
+                const today = new Date().toISOString().substr(0, 10);
+                document.getElementById('date').value = today;
+                document.getElementById('special-notes').value = '';
+                document.getElementById('reference-file-name').textContent = '';
+                document.getElementById('reference-file').value = null;
+                ['current-tasks', 'planned-tasks'].forEach(tableId => {
+                     const tbody = document.getElementById(tableId)?.querySelector('tbody');
+                     if (!tbody) return;
+                     tbody.innerHTML = '';
+                     addTask(tableId);
+                     const firstRow = tbody.querySelector('tr');
+                     if (firstRow) {
+                         firstRow.querySelectorAll('input[type="text"], input[type="date"], textarea').forEach(input => input.value = '');
+                         firstRow.querySelectorAll('.file-name').forEach(span => span.textContent = '');
+                         firstRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+                          firstRow.querySelectorAll('input[type="file"]').forEach(input => input.value = null);
+                     }
+                 });
+                 hideLoadUI();
+            }
+        }
+
+        // --- Excel 저장 기능 (수정됨: 단일 시트, 행 추가 방식) ---
+        function saveAsExcel() {
+            try {
+                // 1. 현재 폼 데이터 수집
+                const author = document.getElementById('author').value || '작성자 미입력';
+                const reportDate = document.getElementById('date').value || new Date().toISOString().substr(0, 10);
+                const currentTasksData = getTableData('current-tasks');
+                const plannedTasksData = getTableData('planned-tasks');
+                const specialNotes = document.getElementById('special-notes').value;
+                const referenceFile = document.getElementById('reference-file-name').textContent;
+                const savedAt = new Date().toLocaleString('ko-KR'); // 저장 시각
+
+                // 2. 테이블 데이터를 하나의 문자열로 변환하는 함수
+                const formatTasksToString = (tasks) => {
+                    if (!tasks || tasks.length === 0) return ""; // 빈 배열 처리
+                     // 업무 내용이 없는 행은 제외하고 변환
+                     return tasks.filter(task => task.content || task.manager || task.status)
+                        .map((task, index) => {
+                            let taskDetails = `${index + 1}. [${task.status || '상태없음'}]`;
+                            if (task.manager) taskDetails += ` ${task.manager}:`;
+                            taskDetails += ` ${task.content || '내용없음'}`;
+                            let extras = [];
+                            if (task.targetDate) extras.push(`목표일: ${task.targetDate}`);
+                            if (task.collaborator) extras.push(`협업: ${task.collaborator}`);
+                            if (task.file) extras.push(`파일: ${task.file}`);
+                            if (extras.length > 0) taskDetails += ` (${extras.join(', ')})`;
+                            return taskDetails;
+                        }).join('\n'); // 각 업무를 줄바꿈으로 구분
+                };
+
+                const currentTasksString = formatTasksToString(currentTasksData);
+                const plannedTasksString = formatTasksToString(plannedTasksData);
+
+                // 3. Excel 시트 헤더 정의 (파일이 없을 경우 생성)
+                const header = ['작성자', '작성일', '금일 진행 업무', '추가 계획 업무', '특이사항', '참조 파일명', '저장 시각'];
+
+                // 4. 현재 데이터를 Excel 행 데이터로 구성
+                const dataRow = [
+                    author,
+                    reportDate,
+                    currentTasksString,
+                    plannedTasksString,
+                    specialNotes,
+                    referenceFile || '', // 빈 값 처리
+                    savedAt
+                ];
+
+                // 5. 워크북 및 워크시트 생성/로드
+                // 기존 파일을 로드하거나 새로 만드는 로직은 복잡해지므로,
+                // 여기서는 항상 '현재 내용만' 포함된 새 파일을 생성하는 것으로 구현합니다.
+                // (기존 파일에 행을 '추가'하는 것은 클라이언트 사이드에서 직접 처리하기 어렵습니다.)
+
+                const ws = XLSX.utils.aoa_to_sheet([header, dataRow]);
+
+                // 열 너비 자동 조정 시도 (대략적)
+                 const colWidths = [
+                     { wch: 15 }, // 작성자
+                     { wch: 12 }, // 작성일
+                     { wch: 50 }, // 금일 업무 (넓게)
+                     { wch: 50 }, // 계획 업무 (넓게)
+                     { wch: 40 }, // 특이사항
+                     { wch: 25 }, // 참조 파일명
+                     { wch: 20 }  // 저장 시각
+                 ];
+                 ws['!cols'] = colWidths;
+
+                 // 텍스트 줄바꿈 적용 (옵션) - 셀 서식 필요
+                 // SheetJS에서 직접적인 셀 스타일링은 제한적이지만, aoa_to_sheet 후 수동 설정 시도 가능
+                 // 예: ws['C2'].s = { alignment: { wrapText: true } }; (스타일링은 유료버전 또는 추가 라이브러리 필요할 수 있음)
+
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "업무보고"); // 시트 이름
+
+                // 6. 파일명 생성
+                const safeAuthor = author.replace(/[/\\?%*:|"<>]/g, '-');
+                const fileName = `PETCOOKER_업무보고_${reportDate}_${safeAuthor}.xlsx`;
+
+                // 7. Excel 파일 다운로드
+                XLSX.writeFile(wb, fileName);
+
+                alert('현재 내용이 Excel 파일로 저장되었습니다.');
+
+            } catch (error) {
+                 console.error("Excel 저장 중 오류 발생:", error);
+                 alert("Excel 파일 저장 중 오류가 발생했습니다. 콘솔 로그를 확인해주세요.");
+            }
+        }
+
+    </script>
+</body>
+</html>
